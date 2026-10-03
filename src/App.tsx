@@ -48,9 +48,9 @@ function App() {
         {page === "Home" && (
           <>
             <section className="hero">
-              <p className="eyebrow">YOUR CINEMA</p>
-              <h1>Keep track of what<br /><em>you</em> watch.</h1>
-              <p className="muted hero-copy">A private archive for your movies and TV shows — ratings, notes, watchlists, lists and tags. Nothing social.</p>
+              <p className="hero-brand-small">LOKAJAY'S</p>
+              <h1 className="hero-brand-title">MOVIE LOGGER</h1>
+              <p className="hero-tagline">Stories on Record</p>
             </section>
 
             <section className="search">
@@ -75,10 +75,10 @@ function App() {
             </div>
 
             <section className="stats">
-              <div><strong>127</strong><span>Logged</span></div>
-              <div><strong>43</strong><span>Watchlist</span></div>
-              <div><strong>8.4</strong><span>Avg Rating</span></div>
-              <div><strong>12</strong><span>Lists</span></div>
+              <div><strong>0</strong><span>Logged</span></div>
+              <div><strong>0</strong><span>Watchlist</span></div>
+              <div><strong>—</strong><span>Avg Rating</span></div>
+              <div><strong>0</strong><span>Lists</span></div>
             </section>
 
             <section className="section">
@@ -86,10 +86,8 @@ function App() {
                 <div><p className="eyebrow">WATCHLIST</p><h2>Waiting to be watched</h2></div>
                 <button className="link" onClick={() => setPage("Watchlists")}>View all →</button>
               </div>
-              <div className="watch-row">
-                <div><span>Sci-Fi</span><strong>12</strong><small> titles</small></div>
-                <div><span>Weekend</span><strong>8</strong><small> titles</small></div>
-                <div><span>Telugu</span><strong>7</strong><small> titles</small></div>
+              <div className="empty-watchlist">
+                <p className="muted">Nothing here yet. Add a movie or TV show to start your watchlist.</p>
               </div>
             </section>
           </>
