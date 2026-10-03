@@ -110,3 +110,151 @@
 .search-submit:hover{
   background:#222228;
 }
+.preview-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  display:grid;
+  place-items:center;
+  padding:32px;
+  background:rgba(0,0,0,.78);
+  backdrop-filter:blur(14px);
+}
+
+.preview-modal{
+  position:relative;
+  width:min(1000px,90vw);
+  max-height:88vh;
+  overflow:auto;
+  border:1px solid #303036;
+  border-radius:18px;
+  background:#111114;
+  box-shadow:0 30px 100px rgba(0,0,0,.65);
+}
+
+.preview-close{
+  position:absolute;
+  top:16px;
+  right:16px;
+  z-index:2;
+  width:40px;
+  height:40px;
+  padding:0;
+  border-radius:50%;
+  font-size:24px;
+  line-height:1;
+}
+
+.preview-content{
+  display:grid;
+  grid-template-columns:300px 1fr;
+  gap:32px;
+  padding:32px;
+}
+
+.preview-poster{
+  aspect-ratio:2/3;
+  overflow:hidden;
+  border-radius:12px;
+  background:#18181c;
+  border:1px solid #2b2b30;
+}
+
+.preview-poster img{
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+}
+
+.preview-poster-empty{
+  width:100%;
+  height:100%;
+  display:grid;
+  place-items:center;
+  color:#66666f;
+}
+
+.preview-info{
+  padding:10px 30px 10px 0;
+}
+
+.preview-info h2{
+  margin:0;
+  font-size:48px;
+  line-height:1;
+  letter-spacing:-.055em;
+}
+
+.preview-meta{
+  margin:14px 0 0;
+  color:#92929a;
+}
+
+.preview-tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:18px;
+}
+
+.preview-tags span{
+  padding:6px 9px;
+  border:1px solid #303036;
+  border-radius:7px;
+  color:#b4b4bc;
+  font-size:11px;
+}
+
+.preview-plot{
+  margin:24px 0 0;
+  color:#c5c5cb;
+  font-size:15px;
+  line-height:1.7;
+}
+
+.preview-details{
+  display:grid;
+  gap:14px;
+  margin-top:24px;
+}
+
+.preview-details div{
+  display:grid;
+  grid-template-columns:100px 1fr;
+  gap:12px;
+}
+
+.preview-details span{
+  color:#66666f;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+}
+
+.preview-details strong{
+  color:#d4d4d8;
+  font-size:13px;
+  font-weight:500;
+}
+
+.preview-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:9px;
+  margin-top:28px;
+}
+
+@media(max-width:800px){
+  .preview-content{
+    grid-template-columns:1fr;
+  }
+
+  .preview-poster{
+    max-width:240px;
+  }
+
+  .preview-info{
+    padding-right:0;
+  }
+}

@@ -6,7 +6,9 @@ import {
   type LocalTitle,
 } from "./lib/db";
 import {
+  getOmdbDetails,
   searchOmdb,
+  type OmdbDetails,
   type OmdbSearchResult,
 } from "./lib/omdb";
 import {
@@ -14,6 +16,7 @@ import {
   removeOmdbApiKey,
   saveOmdbApiKey,
 } from "./lib/settings";
+import TitlePreview from "./components/TitlePreview";
 
 type Page =
   | "Home"
@@ -40,6 +43,10 @@ function App() {
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
+  const [selectedOnlineTitle, setSelectedOnlineTitle] =
+    useState<OmdbDetails | null>(null);
+  const [loadingDetailsId, setLoadingDetailsId] =
+    useState<string | null>(null);
 
   useEffect(() => {
     Database.load("sqlite:movie_logger.db")
@@ -94,12 +101,32 @@ function App() {
     }
   }
 
+  async function handleOnlineTitleClick(imdbId: string) {
+    setLoadingDetailsId(imdbId);
+    setSearchError("");
+
+    try {
+      const details = await getOmdbDetails(imdbId);
+      setSelectedOnlineTitle(details);
+    } catch (error) {
+      setSearchError(
+        error instanceof Error
+          ? error.message
+          : "Could not load title details.",
+      );
+    } finally {
+      setLoadingDetailsId(null);
+    }
+  }
+
   function clearSearch() {
     setSearch("");
     setLocalResults([]);
     setOnlineResults([]);
     setSearchError("");
     setHasSearched(false);
+    setSelectedOnlineTitle(null);
+    setLoadingDetailsId(null);
   }
 
   return (
@@ -225,8 +252,16 @@ function App() {
                     <button
                       className="result"
                       key={movie.imdbID}
+                      onClick={() =>
+                        void handleOnlineTitleClick(movie.imdbID)
+                      }
+                      disabled={loadingDetailsId === movie.imdbID}
                     >
-                      <span>{movie.Title}</span>
+                      <span>
+                        {loadingDetailsId === movie.imdbID
+                          ? "Loading..."
+                          : movie.Title}
+                      </span>
 
                       <small>
                         {movie.Type === "series"
@@ -411,6 +446,13 @@ function App() {
           />
         )}
       </main>
+
+      {selectedOnlineTitle && (
+        <TitlePreview
+          details={selectedOnlineTitle}
+          onClose={() => setSelectedOnlineTitle(null)}
+        />
+      )}
     </div>
   );
 }
