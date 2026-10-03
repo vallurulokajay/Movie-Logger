@@ -11,6 +11,7 @@ import {
   type OmdbDetails,
   type OmdbSearchResult,
 } from "./lib/omdb";
+import { addOmdbTitleToMovieLogs } from "./lib/titles";
 import {
   getOmdbApiKey,
   removeOmdbApiKey,
@@ -47,6 +48,8 @@ function App() {
     useState<OmdbDetails | null>(null);
   const [loadingDetailsId, setLoadingDetailsId] =
     useState<string | null>(null);
+  const [addingToLogs, setAddingToLogs] = useState(false);
+const [actionMessage, setActionMessage] = useState("");
 
   useEffect(() => {
     Database.load("sqlite:movie_logger.db")
@@ -127,6 +130,36 @@ function App() {
     setHasSearched(false);
     setSelectedOnlineTitle(null);
     setLoadingDetailsId(null);
+  }
+
+  async function handleAddToMovieLogs() {
+    if (!selectedOnlineTitle) {
+      return;
+    }
+
+    setAddingToLogs(true);
+    setActionMessage("");
+
+    try {
+      await addOmdbTitleToMovieLogs(selectedOnlineTitle);
+
+      const homeStats = await getHomeStats();
+      setStats(homeStats);
+
+      setActionMessage(
+        `${selectedOnlineTitle.Title} was added to Movie Logs.`,
+      );
+
+      setSelectedOnlineTitle(null);
+    } catch (error) {
+      setActionMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not add the title to Movie Logs.",
+      );
+    } finally {
+      setAddingToLogs(false);
+    }
   }
 
   return (
@@ -400,7 +433,7 @@ function App() {
           </section>
         )}
 
-        {page === "Profile" && (
+              {page === "Profile" && (
           <section className="page-section">
             <div className="page-head">
               <div>
@@ -448,11 +481,18 @@ function App() {
       </main>
 
       {selectedOnlineTitle && (
-        <TitlePreview
-          details={selectedOnlineTitle}
-          onClose={() => setSelectedOnlineTitle(null)}
-        />
-      )}
+  <TitlePreview
+    details={selectedOnlineTitle}
+    onClose={() => setSelectedOnlineTitle(null)}
+    onAddToMovieLogs={() => void handleAddToMovieLogs()}
+    adding={addingToLogs}
+  />
+)}
+{actionMessage && (
+  <div className="action-message">
+    {actionMessage}
+  </div>
+)}
     </div>
   );
 }

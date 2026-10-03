@@ -3,13 +3,20 @@ import type { OmdbDetails } from "../lib/omdb";
 type Props = {
   details: OmdbDetails;
   onClose: () => void;
+  onAddToMovieLogs: () => void;
+  adding: boolean;
 };
 
-function clean(value: string) {
+function clean(value: string | undefined) {
   return value && value !== "N/A" ? value : "—";
 }
 
-export default function TitlePreview({ details, onClose }: Props) {
+export default function TitlePreview({
+  details,
+  onClose,
+  onAddToMovieLogs,
+  adding,
+}: Props) {
   const isSeries = details.Type === "series";
 
   return (
@@ -77,15 +84,21 @@ export default function TitlePreview({ details, onClose }: Props) {
                 <div>
                   <span>Seasons</span>
                   <strong>
-                    {clean(details.totalSeasons ?? "N/A")}
+                    {clean(details.totalSeasons)}
                   </strong>
                 </div>
               )}
             </div>
 
             <div className="preview-actions">
-              <button className="primary">
-                + Add to Movie Logs
+              <button
+                className="primary"
+                onClick={onAddToMovieLogs}
+                disabled={adding}
+              >
+                {adding
+                  ? "Adding..."
+                  : "+ Add to Movie Logs"}
               </button>
 
               <button>

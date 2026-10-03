@@ -258,3 +258,17 @@
     padding-right:0;
   }
 }
+
+.action-message{
+  position:fixed;
+  right:28px;
+  bottom:28px;
+  z-index:120;
+  padding:13px 17px;
+  border:1px solid #303036;
+  border-radius:10px;
+  background:#151518;
+  color:#d4d4d8;
+  font-size:13px;
+  box-shadow:0 15px 45px rgba(0,0,0,.4);
+}
