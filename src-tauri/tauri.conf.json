@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "productName": "Movie Logger",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "identifier": "com.lokajay.movielogger",
   "build": {
     "beforeDevCommand": "npm run dev",

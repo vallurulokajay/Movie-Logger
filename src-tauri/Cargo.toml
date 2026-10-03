@@ -1,6 +1,6 @@
 [package]
 name = "movie-logger"
-version = "0.1.0"
+version = "0.1.2"
 description = "Lokajay's personal movie and TV logger"
 authors = ["Lokajay"]
 edition = "2021"
