@@ -20,17 +20,33 @@
         "minHeight": 700
       }
     ],
-    "security": { "csp": null }
+    "security": {
+      "csp": null
+    }
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi"],
+    "targets": [
+      "nsis",
+      "msi"
+    ],
     "category": "Utility",
     "shortDescription": "Private personal movie and TV logger",
     "longDescription": "Lokajay's personal movie and TV logger.",
-    "resources": []
+    "resources": [],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico",
+      "icons/icon.icns"
+    ]
   },
   "plugins": {
-    "sql": { "preload": ["sqlite:movie_logger.db"] }
+    "sql": {
+      "preload": [
+        "sqlite:movie_logger.db"
+      ]
+    }
   }
 }
