@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import Database from "@tauri-apps/plugin-sql";
+import { getHomeStats } from "./lib/db";
 
 type Page = "Home" | "Movie Logs" | "Watchlists" | "Lists" | "Profile";
 
@@ -14,15 +15,26 @@ function App() {
   const [page, setPage] = useState<Page>("Home");
   const [dbStatus, setDbStatus] = useState("Starting local database...");
   const [search, setSearch] = useState("");
+  const [stats, setStats] = useState({
+  logged: 0,
+  watchlist: 0,
+  lists: 0,
+  averageRating: null as number | null,
+});
 
   useEffect(() => {
-    Database.load("sqlite:movie_logger.db")
-      .then(async (db) => {
-        await db.execute("PRAGMA foreign_keys = ON");
-        setDbStatus("Local database ready");
-      })
-      .catch(() => setDbStatus("Database will initialize when the Tauri shell runs"));
-  }, []);
+  Database.load("sqlite:movie_logger.db")
+    .then(async (db) => {
+      await db.execute("PRAGMA foreign_keys = ON");
+      setDbStatus("Local database ready");
+
+      const homeStats = await getHomeStats();
+      setStats(homeStats);
+    })
+    .catch(() => {
+      setDbStatus("Database will initialize when the Tauri shell runs");
+    });
+}, []);
 
   const filtered = demoMovies.filter((movie) =>
     movie.title.toLowerCase().includes(search.toLowerCase()),
@@ -75,11 +87,28 @@ function App() {
             </div>
 
             <section className="stats">
-              <div><strong>0</strong><span>Logged</span></div>
-              <div><strong>0</strong><span>Watchlist</span></div>
-              <div><strong>—</strong><span>Avg Rating</span></div>
-              <div><strong>0</strong><span>Lists</span></div>
-            </section>
+  <div>
+    <strong>{stats.logged}</strong>
+    <span>Logged</span>
+  </div>
+
+  <div>
+    <strong>{stats.watchlist}</strong>
+    <span>Watchlist</span>
+  </div>
+
+  <div>
+    <strong>
+      {stats.averageRating !== null ? stats.averageRating : "—"}
+    </strong>
+    <span>Avg Rating</span>
+  </div>
+
+  <div>
+    <strong>{stats.lists}</strong>
+    <span>Lists</span>
+  </div>
+</section>
 
             <section className="section">
               <div className="section-head">
