@@ -10,6 +10,8 @@ name = "movie_logger_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
 tauri = { version = "2", features = [] }
 tauri-plugin-sql = { version = "2.5.0", features = ["sqlite"] }
 
