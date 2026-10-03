@@ -1,0 +1,17 @@
+[package]
+name = "movie-logger"
+version = "0.1.0"
+description = "Lokajay's personal movie and TV logger"
+authors = ["Lokajay"]
+edition = "2021"
+
+[lib]
+name = "movie_logger_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-sql = { version = "2.5.0", features = ["sqlite"] }
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }

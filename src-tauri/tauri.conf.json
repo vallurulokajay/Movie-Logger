@@ -1,0 +1,36 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "productName": "Movie Logger",
+  "version": "0.1.0",
+  "identifier": "com.lokajay.movielogger",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Lokajay's Movie Logger",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 1100,
+        "minHeight": 700
+      }
+    ],
+    "security": { "csp": null }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi"],
+    "category": "Utility",
+    "shortDescription": "Private personal movie and TV logger",
+    "longDescription": "Lokajay's personal movie and TV logger.",
+    "resources": []
+  },
+  "plugins": {
+    "sql": { "preload": ["sqlite:movie_logger.db"] }
+  }
+}
