@@ -43,3 +43,31 @@ export async function getHomeStats() {
         : null,
   };
 }
+
+export type LocalTitle = {
+  id: number;
+  title: string;
+  media_type: "movie" | "tv";
+  release_date: string | null;
+  first_air_date: string | null;
+  poster_path: string | null;
+};
+
+export async function searchLocalTitles(query: string): Promise<LocalTitle[]> {
+  const db = await getDatabase();
+
+  return await db.select<LocalTitle[]>(
+    `SELECT
+       id,
+       title,
+       media_type,
+       release_date,
+       first_air_date,
+       poster_path
+     FROM titles
+     WHERE title LIKE $1
+     ORDER BY title COLLATE NOCASE
+     LIMIT 20`,
+    [`%${query}%`],
+  );
+}

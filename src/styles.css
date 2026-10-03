@@ -98,3 +98,15 @@
   color:#92929a;
   font-size:13px;
 }
+.search-submit{
+  font-size:10px;
+  color:#77777f;
+  border:1px solid #303038;
+  background:#19191c;
+  border-radius:6px;
+  padding:4px 7px;
+}
+
+.search-submit:hover{
+  background:#222228;
+}
