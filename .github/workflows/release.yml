@@ -1,7 +1,6 @@
 name: Build Windows App
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - "v*"
@@ -9,6 +8,7 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,11 +19,19 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+      - name: Build Windows application
+        uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -32,3 +40,4 @@ jobs:
           releaseBody: "Windows installer for Lokajay's Movie Logger."
           releaseDraft: true
           prerelease: false
+          args: "--bundles nsis,msi"
