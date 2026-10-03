@@ -1,9 +1,10 @@
-name: Build Windows App
-
 on:
   push:
     tags:
       - "v*"
+
+permissions:
+  contents: write
 
 jobs:
   build-windows:
