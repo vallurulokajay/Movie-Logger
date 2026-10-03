@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react";
 import Database from "@tauri-apps/plugin-sql";
 import { getHomeStats } from "./lib/db";
+import {
+  getOmdbApiKey,
+  removeOmdbApiKey,
+  saveOmdbApiKey,
+} from "./lib/settings";
 
-type Page = "Home" | "Movie Logs" | "Watchlists" | "Lists" | "Profile";
+type Page =
+  | "Home"
+  | "Movie Logs"
+  | "Watchlists"
+  | "Lists"
+  | "Profile"
+  | "Settings";
 
 const demoMovies = [
   { title: "Interstellar", year: "2014", type: "MOVIE", rating: "9.5 / 10", poster: "https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg" },
@@ -138,11 +149,14 @@ function App() {
 
         {page === "Profile" && (
           <section className="page-section">
-            <div className="page-head"><div><p className="eyebrow">PERSONAL PROFILE</p><h1>Profile</h1></div><button>Settings</button></div>
+            <div className="page-head"><div><p className="eyebrow">PERSONAL PROFILE</p><h1>Profile</h1></div><button onClick={() => setPage("Settings")}>Settings</button></div>
             <div className="profile-card"><div className="avatar">L</div><div><h2>Lokajay</h2><p className="muted">Your private Movie Logger profile.</p><button>Edit Profile</button></div></div>
             <p className="db-status">{dbStatus}</p>
           </section>
         )}
+        {page === "Settings" && (
+  <SettingsPage onBack={() => setPage("Profile")} />
+)}
       </main>
     </div>
   );
@@ -157,5 +171,102 @@ function Collection({ title, subtitle, filtered }: { title: string; subtitle: st
     </section>
   );
 }
+function SettingsPage({ onBack }: { onBack: () => void }) {
+  const [apiKey, setApiKey] = useState("");
+  const [savedKey, setSavedKey] = useState(false);
+  const [status, setStatus] = useState("");
 
+  useEffect(() => {
+    getOmdbApiKey()
+      .then((key) => {
+        setApiKey(key);
+        setSavedKey(Boolean(key));
+      })
+      .catch(() => {
+        setStatus("Could not load settings.");
+      });
+  }, []);
+
+  async function handleSave() {
+    try {
+      await saveOmdbApiKey(apiKey);
+
+      setSavedKey(Boolean(apiKey.trim()));
+
+      setStatus(
+        apiKey.trim()
+          ? "OMDb API key saved locally."
+          : "OMDb API key removed."
+      );
+    } catch {
+      setStatus("Could not save the OMDb API key.");
+    }
+  }
+
+  async function handleRemove() {
+    try {
+      await removeOmdbApiKey();
+
+      setApiKey("");
+      setSavedKey(false);
+      setStatus("OMDb API key removed.");
+    } catch {
+      setStatus("Could not remove the OMDb API key.");
+    }
+  }
+
+  return (
+    <section className="page-section">
+      <div className="page-head">
+        <div>
+          <p className="eyebrow">APPLICATION</p>
+          <h1>Settings</h1>
+        </div>
+
+        <button onClick={onBack}>Back</button>
+      </div>
+
+      <div className="settings-card">
+        <div>
+          <p className="eyebrow">METADATA PROVIDER</p>
+          <h2>OMDb API</h2>
+
+          <p className="muted">
+            Used to search for movies and TV shows and retrieve their
+            metadata.
+          </p>
+        </div>
+
+        <label className="settings-label">
+          OMDb API Key
+
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="Enter your OMDb API key"
+          />
+        </label>
+
+        <div className="settings-actions">
+          <button className="primary" onClick={handleSave}>
+            Save Key
+          </button>
+
+          {savedKey && (
+            <button onClick={handleRemove}>
+              Remove Key
+            </button>
+          )}
+        </div>
+
+        {status && (
+          <p className="settings-status">
+            {status}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
 export default App;
