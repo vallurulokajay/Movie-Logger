@@ -15,6 +15,7 @@ import {
 type Props = {
   onAddTitle: () => void;
   onChanged: () => Promise<void>;
+  onOpenTitle: (titleId: number) => void;
 };
 
 function yearOf(movie: LocalTitle) {
@@ -28,6 +29,7 @@ function yearOf(movie: LocalTitle) {
 export default function WatchlistsPage({
   onAddTitle,
   onChanged,
+  onOpenTitle,
 }: Props) {
   const [watchlists, setWatchlists] =
     useState<Watchlist[]>([]);
@@ -360,8 +362,18 @@ export default function WatchlistsPage({
         <div className="watchlist-grid">
           {titles.map((movie) => (
             <article
-              className="watchlist-card"
+              className="watchlist-card clickable"
               key={movie.id}
+              onClick={() =>
+                onOpenTitle(movie.id)
+              }
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  onOpenTitle(movie.id);
+                }
+              }}
             >
               <div className="watchlist-poster">
                 {movie.poster_path ? (
@@ -393,21 +405,23 @@ export default function WatchlistsPage({
               <div className="watchlist-card-actions">
                 <button
                   className="primary"
-                  onClick={() =>
+                  onClick={(event) => {
+                    event.stopPropagation();
                     void handleWatched(
                       movie.id,
-                    )
-                  }
+                    );
+                  }}
                 >
                   Mark as Watched
                 </button>
 
                 <button
-                  onClick={() =>
+                  onClick={(event) => {
+                    event.stopPropagation();
                     void handleRemove(
                       movie.id,
-                    )
-                  }
+                    );
+                  }}
                 >
                   Remove
                 </button>

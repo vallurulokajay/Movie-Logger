@@ -1769,3 +1769,34 @@
     grid-template-columns:1fr;
   }
 }
+
+
+.clickable{
+  cursor:pointer;
+}
+
+.movie-log-card.clickable:hover .movie-log-poster,
+.watchlist-card.clickable:hover .watchlist-poster,
+.list-title-card.clickable:hover .list-title-poster{
+  border-color:#55555d;
+  transform:translateY(-2px);
+}
+
+.movie-log-card .movie-log-poster,
+.watchlist-card .watchlist-poster,
+.list-title-card .list-title-poster{
+  transition:
+    transform .16s ease,
+    border-color .16s ease;
+}
+
+.movie-log-list-row.clickable:hover,
+.list-title-row.clickable:hover{
+  background:#16161a;
+}
+
+.movie-log-list-row.clickable:focus,
+.list-title-row.clickable:focus{
+  outline:1px solid #4a4a52;
+  outline-offset:-1px;
+}

@@ -490,12 +490,20 @@ const [actionMessage, setActionMessage] = useState("");
           <MovieLogsPage
             logs={movieLogs}
             onAddTitle={() => setPage("Home")}
+            onOpenTitle={(titleId) => {
+              setSelectedTitleId(titleId);
+              setPage("Title Details");
+            }}
           />
         )}
 
         {page === "Watchlists" && (
           <WatchlistsPage
             onAddTitle={() => setPage("Home")}
+            onOpenTitle={(titleId) => {
+              setSelectedTitleId(titleId);
+              setPage("Title Details");
+            }}
             onChanged={async () => {
               const homeStats = await getHomeStats();
               setStats(homeStats);
@@ -506,6 +514,10 @@ const [actionMessage, setActionMessage] = useState("");
         {page === "Lists" && (
           <ListsPage
             onAddTitle={() => setPage("Home")}
+            onOpenTitle={(titleId) => {
+              setSelectedTitleId(titleId);
+              setPage("Title Details");
+            }}
             onChanged={async () => {
               const homeStats =
                 await getHomeStats();

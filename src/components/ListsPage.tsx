@@ -14,6 +14,7 @@ import {
 type Props = {
   onAddTitle: () => void;
   onChanged: () => Promise<void>;
+  onOpenTitle: (titleId: number) => void;
 };
 
 function yearOf(title: LocalTitle) {
@@ -27,6 +28,7 @@ function yearOf(title: LocalTitle) {
 export default function ListsPage({
   onAddTitle,
   onChanged,
+  onOpenTitle,
 }: Props) {
   const [lists, setLists] = useState<UserList[]>([]);
   const [selectedListId, setSelectedListId] =
@@ -518,8 +520,18 @@ export default function ListsPage({
                   {filteredTitles.map(
                     (title) => (
                       <article
-                        className="list-title-card"
+                        className="list-title-card clickable"
                         key={title.id}
+                        onClick={() =>
+                          onOpenTitle(title.id)
+                        }
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            onOpenTitle(title.id);
+                          }
+                        }}
                       >
                         <div className="list-title-poster">
                           {title.poster_path ? (
@@ -550,11 +562,12 @@ export default function ListsPage({
                         </small>
 
                         <button
-                          onClick={() =>
+                          onClick={(event) => {
+                            event.stopPropagation();
                             void handleRemove(
                               title.id,
-                            )
-                          }
+                            );
+                          }}
                         >
                           Remove
                         </button>
@@ -575,8 +588,18 @@ export default function ListsPage({
                   {filteredTitles.map(
                     (title) => (
                       <div
-                        className="list-title-row"
+                        className="list-title-row clickable"
                         key={title.id}
+                        onClick={() =>
+                          onOpenTitle(title.id)
+                        }
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            onOpenTitle(title.id);
+                          }
+                        }}
                       >
                         <div className="list-small-poster">
                           {title.poster_path ? (
@@ -614,11 +637,12 @@ export default function ListsPage({
                         </span>
 
                         <button
-                          onClick={() =>
+                          onClick={(event) => {
+                            event.stopPropagation();
                             void handleRemove(
                               title.id,
-                            )
-                          }
+                            );
+                          }}
                         >
                           Remove
                         </button>

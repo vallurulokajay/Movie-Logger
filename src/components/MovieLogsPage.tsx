@@ -4,6 +4,7 @@ import type { MovieLog } from "../lib/db";
 type Props = {
   logs: MovieLog[];
   onAddTitle: () => void;
+  onOpenTitle: (titleId: number) => void;
 };
 
 type TypeFilter = "all" | "movie" | "tv";
@@ -21,6 +22,7 @@ function genresOf(movie: MovieLog) {
 export default function MovieLogsPage({
   logs,
   onAddTitle,
+  onOpenTitle,
 }: Props) {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] =
@@ -275,8 +277,18 @@ export default function MovieLogsPage({
 
           {filtered.map((movie) => (
             <article
-              className="movie-log-list-row"
+              className="movie-log-list-row clickable"
               key={movie.id}
+              onClick={() =>
+                onOpenTitle(movie.id)
+              }
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  onOpenTitle(movie.id);
+                }
+              }}
             >
               <div className="movie-log-list-poster">
                 {movie.poster_path ? (

@@ -294,7 +294,7 @@ export async function markTitleWatched(
   } else {
     await db.execute(
       `UPDATE title_logs
-       SET times_watched = times_watched + 1,
+       SET times_watched = 1,
            updated_at = CURRENT_TIMESTAMP
        WHERE title_id = $1`,
       [titleId],
