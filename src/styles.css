@@ -272,3 +272,311 @@
   font-size:13px;
   box-shadow:0 15px 45px rgba(0,0,0,.4);
 }
+
+
+.movie-logs-toolbar{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  margin-bottom:24px;
+  padding:10px;
+  border:1px solid #242429;
+  border-radius:12px;
+  background:#101013;
+}
+
+.movie-logs-search{
+  flex:1;
+  min-width:260px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 10px;
+}
+
+.movie-logs-search span{
+  color:#71717a;
+  font-size:21px;
+}
+
+.movie-logs-search input{
+  width:100%;
+  min-width:0;
+  padding:9px 0;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:#fff;
+}
+
+.movie-logs-search input::placeholder{
+  color:#55555d;
+}
+
+.movie-logs-filters{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  position:relative;
+}
+
+.movie-logs-filters > button{
+  padding:8px 11px;
+}
+
+.movie-logs-filters > button.selected{
+  background:#1d1d22;
+  color:#fff;
+}
+
+.genre-filter{
+  position:relative;
+}
+
+.genre-filter > button{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:8px 11px;
+}
+
+.filter-chevron{
+  color:#77777f;
+  font-size:10px;
+}
+
+.genre-menu{
+  position:absolute;
+  right:0;
+  top:calc(100% + 7px);
+  z-index:20;
+  min-width:170px;
+  max-height:280px;
+  overflow:auto;
+  padding:6px;
+  border:1px solid #303036;
+  border-radius:10px;
+  background:#151518;
+  box-shadow:0 18px 50px rgba(0,0,0,.45);
+}
+
+.genre-option{
+  display:block;
+  width:100%;
+  border:0;
+  background:transparent;
+  padding:9px 10px;
+  border-radius:7px;
+  text-align:left;
+  color:#b9b9c1;
+}
+
+.genre-option:hover{
+  background:#1d1d22;
+}
+
+.genre-option.selected{
+  background:#24242a;
+  color:#fff;
+}
+
+.toolbar-spacer{
+  flex:1;
+}
+
+.view-toggle{
+  min-width:38px;
+  padding:8px 10px;
+}
+
+.movie-log-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:18px;
+}
+
+.movie-log-card{
+  min-width:0;
+}
+
+.movie-log-poster{
+  position:relative;
+  aspect-ratio:2/3;
+  overflow:hidden;
+  border:1px solid #27272b;
+  border-radius:11px;
+  background:#151518;
+}
+
+.movie-log-poster img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.movie-log-poster > span{
+  position:absolute;
+  top:9px;
+  left:9px;
+  padding:5px 7px;
+  border-radius:6px;
+  background:rgba(0,0,0,.72);
+  color:#d4d4d8;
+  font-size:9px;
+  letter-spacing:.12em;
+}
+
+.movie-log-poster-empty{
+  width:100%;
+  height:100%;
+  display:grid;
+  place-items:center;
+  color:#66666f;
+  font-size:11px;
+  letter-spacing:.12em;
+}
+
+.movie-log-info{
+  padding-top:10px;
+}
+
+.movie-log-info > strong{
+  display:block;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+
+.movie-log-subline{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:4px;
+  color:#71717a;
+  font-size:12px;
+}
+
+.movie-log-rating{
+  color:#c7c7cd;
+}
+
+.movie-log-info > small{
+  display:block;
+  margin-top:6px;
+  color:#66666f;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.times-watched{
+  display:inline-block;
+  margin-top:8px;
+  padding:4px 7px;
+  border:1px solid #303036;
+  border-radius:6px;
+  color:#a8a8b0;
+  font-size:10px;
+}
+
+.movie-log-list{
+  overflow:hidden;
+  border:1px solid #242429;
+  border-radius:13px;
+  background:#101013;
+}
+
+.movie-log-list-header,
+.movie-log-list-row{
+  display:grid;
+  grid-template-columns:70px minmax(210px,1.6fr) 110px 90px minmax(180px,1fr) 110px;
+  gap:14px;
+  align-items:center;
+  padding:12px 15px;
+}
+
+.movie-log-list-header{
+  border-bottom:1px solid #242429;
+  color:#66666f;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.movie-log-list-row{
+  min-height:82px;
+  border-bottom:1px solid #1e1e23;
+  color:#aaaab2;
+  font-size:13px;
+}
+
+.movie-log-list-row:last-child{
+  border-bottom:0;
+}
+
+.movie-log-list-row > strong{
+  color:#e2e2e5;
+}
+
+.movie-log-list-poster{
+  width:44px;
+  height:62px;
+  overflow:hidden;
+  display:grid;
+  place-items:center;
+  border:1px solid #2b2b30;
+  border-radius:6px;
+  background:#18181c;
+  color:#66666f;
+  font-size:9px;
+}
+
+.movie-log-list-poster img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.movie-log-count{
+  margin:16px 0 0;
+  color:#5f5f67;
+  font-size:11px;
+  text-align:right;
+}
+
+.movie-logs-empty{
+  min-height:340px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  padding:40px;
+  border:1px solid #242429;
+  border-radius:13px;
+  background:#101013;
+}
+
+.movie-logs-empty h2{
+  margin:0;
+  font-size:28px;
+  letter-spacing:-.035em;
+}
+
+.movie-logs-empty .muted{
+  margin:9px 0 20px;
+}
+
+@media(max-width:1200px){
+  .movie-log-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .movie-log-list-header,
+  .movie-log-list-row{
+    grid-template-columns:60px minmax(180px,1.5fr) 90px 75px minmax(130px,1fr) 95px;
+  }
+}

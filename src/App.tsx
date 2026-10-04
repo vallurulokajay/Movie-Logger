@@ -20,6 +20,7 @@ import {
   saveOmdbApiKey,
 } from "./lib/settings";
 import TitlePreview from "./components/TitlePreview";
+import MovieLogsPage from "./components/MovieLogsPage";
 
 type Page =
   | "Home"
@@ -397,10 +398,9 @@ const [actionMessage, setActionMessage] = useState("");
         )}
 
         {page === "Movie Logs" && (
-          <Collection
-            title="Movie Logs"
-            subtitle="YOUR HISTORY"
-            filtered={movieLogs}
+          <MovieLogsPage
+            logs={movieLogs}
+            onAddTitle={() => setPage("Home")}
           />
         )}
 
