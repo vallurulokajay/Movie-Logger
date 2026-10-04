@@ -338,3 +338,119 @@ export async function removeTitleFromList(
     [listId, titleId],
   );
 }
+
+
+export type UserList = {
+  id: number;
+  name: string;
+  description: string | null;
+  count: number;
+};
+
+export async function getLists(): Promise<UserList[]> {
+  const db = await getDatabase();
+
+  return db.select<UserList[]>(
+    `SELECT
+       l.id,
+       l.name,
+       l.description,
+       COUNT(li.title_id) AS count
+     FROM lists l
+     LEFT JOIN list_items li
+       ON li.list_id = l.id
+     GROUP BY l.id
+     ORDER BY l.name COLLATE NOCASE`,
+  );
+}
+
+export async function getListTitles(
+  listId: number,
+): Promise<LocalTitle[]> {
+  const db = await getDatabase();
+
+  return db.select<LocalTitle[]>(
+    `SELECT
+       t.id,
+       t.title,
+       t.media_type,
+       t.release_date,
+       t.first_air_date,
+       t.poster_path
+     FROM titles t
+     JOIN list_items li
+       ON li.title_id = t.id
+     WHERE li.list_id = $1
+     ORDER BY t.title COLLATE NOCASE`,
+    [listId],
+  );
+}
+
+export async function createList(
+  name: string,
+  description: string,
+): Promise<number> {
+  const db = await getDatabase();
+  const cleaned = name.trim();
+
+  if (!cleaned) {
+    throw new Error("List name is required.");
+  }
+
+  await db.execute(
+    `INSERT INTO lists (
+      name,
+      description
+    )
+    VALUES ($1, $2)`,
+    [cleaned, description.trim() || null],
+  );
+
+  const rows = await db.select<{ id: number }[]>(
+    `SELECT id
+     FROM lists
+     WHERE name = $1
+     LIMIT 1`,
+    [cleaned],
+  );
+
+  if (rows.length === 0) {
+    throw new Error("Could not create the list.");
+  }
+
+  return rows[0].id;
+}
+
+export async function updateList(
+  id: number,
+  name: string,
+  description: string,
+): Promise<void> {
+  const db = await getDatabase();
+  const cleaned = name.trim();
+
+  if (!cleaned) {
+    throw new Error("List name is required.");
+  }
+
+  await db.execute(
+    `UPDATE lists
+     SET name = $1,
+         description = $2,
+         updated_at = CURRENT_TIMESTAMP
+     WHERE id = $3`,
+    [cleaned, description.trim() || null, id],
+  );
+}
+
+export async function deleteList(
+  id: number,
+): Promise<void> {
+  const db = await getDatabase();
+
+  await db.execute(
+    `DELETE FROM lists
+     WHERE id = $1`,
+    [id],
+  );
+}

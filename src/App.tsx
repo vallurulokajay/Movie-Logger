@@ -3,6 +3,7 @@ import Database from "@tauri-apps/plugin-sql";
 import {
   getHomeStats,
   getMovieLogs,
+  getLists,
   searchLocalTitles,
   type LocalTitle,
   type MovieLog,
@@ -16,6 +17,7 @@ import {
 import {
   addOmdbTitleToMovieLogs,
   addOmdbTitleToWatchlist,
+  addOmdbTitleToLists,
 } from "./lib/titles";
 import {
   getOmdbApiKey,
@@ -25,6 +27,7 @@ import {
 import TitlePreview from "./components/TitlePreview";
 import MovieLogsPage from "./components/MovieLogsPage";
 import WatchlistsPage from "./components/WatchlistsPage";
+import ListsPage from "./components/ListsPage";
 
 type Page =
   | "Home"
@@ -60,6 +63,8 @@ function App() {
   const [addingToLogs, setAddingToLogs] = useState(false);
   const [watchlistBusy, setWatchlistBusy] = useState(false);
 const [actionMessage, setActionMessage] = useState("");
+  const [listPickerOpen, setListPickerOpen] =
+    useState(false);
 
   useEffect(() => {
     Database.load("sqlite:movie_logger.db")
@@ -207,6 +212,41 @@ const [actionMessage, setActionMessage] = useState("");
       );
     } finally {
       setWatchlistBusy(false);
+    }
+  }
+
+  async function handleAddToLists(
+    listIds: number[],
+  ) {
+    if (
+      !selectedOnlineTitle ||
+      listIds.length === 0
+    ) {
+      return;
+    }
+
+    try {
+      await addOmdbTitleToLists(
+        selectedOnlineTitle,
+        listIds,
+      );
+
+      const homeStats =
+        await getHomeStats();
+      setStats(homeStats);
+
+      setActionMessage(
+        `${selectedOnlineTitle.Title} was added to ${listIds.length === 1 ? "your list." : "your lists."}`,
+      );
+
+      setListPickerOpen(false);
+      setSelectedOnlineTitle(null);
+    } catch (error) {
+      setActionMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not add the title to your lists.",
+      );
     }
   }
 
@@ -452,34 +492,14 @@ const [actionMessage, setActionMessage] = useState("");
         )}
 
         {page === "Lists" && (
-          <section className="page-section">
-            <div className="page-head">
-              <div>
-                <p className="eyebrow">
-                  YOUR COLLECTIONS
-                </p>
-
-                <h1>Lists</h1>
-              </div>
-
-              <button className="primary">
-                + New List
-              </button>
-            </div>
-
-            <div className="empty-page">
-              <h2>No lists yet</h2>
-
-              <p className="muted">
-                Create your first personal list when
-                you are ready.
-              </p>
-
-              <button className="primary">
-                + New List
-              </button>
-            </div>
-          </section>
+          <ListsPage
+            onAddTitle={() => setPage("Home")}
+            onChanged={async () => {
+              const homeStats =
+                await getHomeStats();
+              setStats(homeStats);
+            }}
+          />
         )}
 
               {page === "Profile" && (
@@ -535,6 +555,7 @@ const [actionMessage, setActionMessage] = useState("");
     onClose={() => setSelectedOnlineTitle(null)}
     onAddToMovieLogs={() => void handleAddToMovieLogs()}
     onAddToWatchlist={() => void handleAddToWatchlist()}
+    onAddToList={() => setListPickerOpen(true)}
     adding={addingToLogs}
     watchlistBusy={watchlistBusy}
   />
@@ -543,6 +564,14 @@ const [actionMessage, setActionMessage] = useState("");
   <div className="action-message">
     {actionMessage}
   </div>
+)}
+
+{listPickerOpen && selectedOnlineTitle && (
+  <AddToListModal
+    title={selectedOnlineTitle}
+    onClose={() => setListPickerOpen(false)}
+    onSave={(ids) => void handleAddToLists(ids)}
+  />
 )}
     </div>
   );
@@ -673,3 +702,154 @@ function SettingsPage({
 }
 
 export default App;
+
+
+function AddToListModal({
+  title,
+  onClose,
+  onSave,
+}: {
+  title: OmdbDetails;
+  onClose: () => void;
+  onSave: (ids: number[]) => void;
+}) {
+  const [lists, setLists] = useState<
+    Array<{
+      id: number;
+      name: string;
+      count: number;
+    }>
+  >([]);
+
+  const [selected, setSelected] =
+    useState<number[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  useEffect(() => {
+    getLists()
+      .then((items) => {
+        setLists(items);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
+
+  function toggle(id: number) {
+    setSelected((current) =>
+      current.includes(id)
+        ? current.filter(
+            (item) => item !== id,
+          )
+        : [...current, id],
+    );
+  }
+
+  return (
+    <div
+      className="modal-backdrop"
+      onClick={onClose}
+    >
+      <div
+        className="list-picker-modal"
+        onClick={(event) =>
+          event.stopPropagation()
+        }
+      >
+        <div className="list-picker-head">
+          <div>
+            <p className="eyebrow">
+              ADD TO LIST
+            </p>
+            <h2>{title.Title}</h2>
+          </div>
+
+          <button onClick={onClose}>
+            ×
+          </button>
+        </div>
+
+        {loading ? (
+          <p className="muted">
+            Loading lists...
+          </p>
+        ) : lists.length === 0 ? (
+          <div className="list-picker-empty">
+            <h3>No lists yet</h3>
+            <p className="muted">
+              Create a list first, then add
+              this title to it.
+            </p>
+
+            <button onClick={onClose}>
+              Close
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="list-picker-options">
+              {lists.map((list) => (
+                <label
+                  className={
+                    selected.includes(list.id)
+                      ? "list-picker-option selected"
+                      : "list-picker-option"
+                  }
+                  key={list.id}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(
+                      list.id,
+                    )}
+                    onChange={() =>
+                      toggle(list.id)
+                    }
+                  />
+
+                  <span>
+                    <strong>
+                      {list.name}
+                    </strong>
+
+                    <small>
+                      {list.count}{" "}
+                      {list.count === 1
+                        ? "title"
+                        : "titles"}
+                    </small>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <div className="list-picker-actions">
+              <button
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="primary"
+                disabled={
+                  selected.length === 0
+                }
+                onClick={() =>
+                  onSave(selected)
+                }
+              >
+                Add to{" "}
+                {selected.length > 1
+                  ? `${selected.length} Lists`
+                  : "List"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

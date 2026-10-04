@@ -337,3 +337,142 @@ const titleId = await getOrCreateOmdbTitleId(details);
 
   return titleId;
 }
+
+
+export async function addOmdbTitleToLists(
+  details: OmdbDetails,
+  listIds: number[],
+): Promise<number> {
+  const db = await getDatabase();
+
+  const mediaType =
+    details.Type === "series" ? "tv" : "movie";
+
+  const externalId = details.imdbID;
+
+  const existing = await db.select<{ id: number }[]>(
+    `SELECT id
+     FROM titles
+     WHERE external_source = $1
+       AND external_id = $2
+       AND media_type = $3
+     LIMIT 1`,
+    ["omdb", externalId, mediaType],
+  );
+
+  let titleId: number;
+
+  if (existing.length > 0) {
+    titleId = existing[0].id;
+  } else {
+    const releaseDate =
+      mediaType === "movie"
+        ? parseReleaseDate(details.Released)
+        : null;
+
+    const firstAirDate =
+      mediaType === "tv"
+        ? parseReleaseDate(details.Released)
+        : null;
+
+    await db.execute(
+      `INSERT INTO titles (
+        external_id,
+        external_source,
+        media_type,
+        title,
+        original_title,
+        poster_path,
+        backdrop_path,
+        release_date,
+        first_air_date,
+        last_air_date,
+        runtime,
+        overview,
+        original_language,
+        director,
+        main_cast
+      )
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8,
+        $9, $10, $11, $12, $13, $14, $15
+      )`,
+      [
+        externalId,
+        "omdb",
+        mediaType,
+        details.Title,
+        null,
+        clean(details.Poster),
+        null,
+        releaseDate,
+        firstAirDate,
+        null,
+        parseRuntime(details.Runtime),
+        clean(details.Plot),
+        clean(details.Language),
+        clean(details.Director),
+        parseCast(details.Actors),
+      ],
+    );
+
+    const inserted = await db.select<{ id: number }[]>(
+      `SELECT id
+       FROM titles
+       WHERE external_source = $1
+         AND external_id = $2
+         AND media_type = $3
+       LIMIT 1`,
+      ["omdb", externalId, mediaType],
+    );
+
+    if (inserted.length === 0) {
+      throw new Error("Could not create the title record.");
+    }
+
+    titleId = inserted[0].id;
+
+    for (const genreName of parseGenres(details.Genre)) {
+      await db.execute(
+        `INSERT OR IGNORE INTO genres (
+          name,
+          is_custom
+        )
+        VALUES ($1, 0)`,
+        [genreName],
+      );
+
+      const genre = await db.select<{ id: number }[]>(
+        `SELECT id
+         FROM genres
+         WHERE name = $1
+         LIMIT 1`,
+        [genreName],
+      );
+
+      if (genre.length > 0) {
+        await db.execute(
+          `INSERT OR IGNORE INTO title_genres (
+            title_id,
+            genre_id
+          )
+          VALUES ($1, $2)`,
+          [titleId, genre[0].id],
+        );
+      }
+    }
+  }
+
+  for (const listId of listIds) {
+    await db.execute(
+      `INSERT OR IGNORE INTO list_items (
+        list_id,
+        title_id
+      )
+      VALUES ($1, $2)`,
+      [listId, titleId],
+    );
+  }
+
+  return titleId;
+}

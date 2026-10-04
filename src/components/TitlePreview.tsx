@@ -5,6 +5,7 @@ type Props = {
   onClose: () => void;
   onAddToMovieLogs: () => void;
   onAddToWatchlist: () => void;
+  onAddToList: () => void;
   adding: boolean;
   watchlistBusy: boolean;
 };
@@ -18,6 +19,7 @@ export default function TitlePreview({
   onClose,
   onAddToMovieLogs,
   onAddToWatchlist,
+  onAddToList,
   adding,
   watchlistBusy,
 }: Props) {
@@ -114,7 +116,12 @@ export default function TitlePreview({
                   : "+ Add to Watchlist"}
               </button>
 
-              <button>
+              <button
+                onClick={onAddToList}
+                disabled={
+                  adding || watchlistBusy
+                }
+              >
                 + Add to List
               </button>
             </div>
