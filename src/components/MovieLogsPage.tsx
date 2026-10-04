@@ -8,17 +8,13 @@ type Props = {
 
 type TypeFilter = "all" | "movie" | "tv";
 
-function getYear(movie: MovieLog) {
-  const value = movie.release_date || movie.first_air_date;
-  return value ? value.slice(0, 4) : "—";
+function yearOf(movie: MovieLog) {
+  return (movie.release_date || movie.first_air_date || "—").slice(0, 4);
 }
 
-function getGenres(movie: MovieLog) {
+function genresOf(movie: MovieLog) {
   return movie.genres
-    ? movie.genres
-        .split(",")
-        .map((genre) => genre.trim())
-        .filter(Boolean)
+    ? movie.genres.split(",").map((g) => g.trim()).filter(Boolean)
     : [];
 }
 
@@ -29,11 +25,8 @@ export default function MovieLogsPage({
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] =
     useState<TypeFilter>("all");
-  const [genreFilter, setGenreFilter] = useState<string | null>(
-    null,
-  );
-  const [genreMenuOpen, setGenreMenuOpen] =
-    useState(false);
+  const [genreFilter, setGenreFilter] =
+    useState("All Genres");
   const [viewMode, setViewMode] =
     useState<"grid" | "list">("grid");
 
@@ -41,7 +34,7 @@ export default function MovieLogsPage({
     const values = new Set<string>();
 
     for (const movie of logs) {
-      for (const genre of getGenres(movie)) {
+      for (const genre of genresOf(movie)) {
         values.add(genre);
       }
     }
@@ -51,8 +44,8 @@ export default function MovieLogsPage({
     );
   }, [logs]);
 
-  const filteredLogs = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
 
     return logs.filter((movie) => {
       if (
@@ -63,32 +56,28 @@ export default function MovieLogsPage({
       }
 
       if (
-        genreFilter &&
-        !getGenres(movie).some(
-          (genre) =>
-            genre.toLowerCase() ===
-            genreFilter.toLowerCase(),
+        genreFilter !== "All Genres" &&
+        !genresOf(movie).some(
+          (genre) => genre === genreFilter,
         )
       ) {
         return false;
       }
 
-      if (!normalizedQuery) {
+      if (!q) {
         return true;
       }
 
-      const searchable = [
+      return [
         movie.title,
         movie.genres ?? "",
         movie.media_type === "movie"
           ? "movie"
           : "tv show",
-        String(movie.rating ?? ""),
       ]
         .join(" ")
-        .toLowerCase();
-
-      return searchable.includes(normalizedQuery);
+        .toLowerCase()
+        .includes(q);
     });
   }, [logs, query, typeFilter, genreFilter]);
 
@@ -113,9 +102,7 @@ export default function MovieLogsPage({
           <span>⌕</span>
           <input
             value={query}
-            onChange={(event) =>
-              setQuery(event.target.value)
-            }
+            onChange={(e) => setQuery(e.target.value)}
             placeholder="Search your movie logs..."
           />
         </div>
@@ -123,9 +110,7 @@ export default function MovieLogsPage({
         <div className="movie-logs-filters">
           <button
             className={
-              typeFilter === "all"
-                ? "selected"
-                : ""
+              typeFilter === "all" ? "selected" : ""
             }
             onClick={() => setTypeFilter("all")}
           >
@@ -134,9 +119,7 @@ export default function MovieLogsPage({
 
           <button
             className={
-              typeFilter === "movie"
-                ? "selected"
-                : ""
+              typeFilter === "movie" ? "selected" : ""
             }
             onClick={() => setTypeFilter("movie")}
           >
@@ -145,71 +128,24 @@ export default function MovieLogsPage({
 
           <button
             className={
-              typeFilter === "tv"
-                ? "selected"
-                : ""
+              typeFilter === "tv" ? "selected" : ""
             }
             onClick={() => setTypeFilter("tv")}
           >
             TV Shows
           </button>
 
-          <div className="genre-filter">
-            <button
-              className={
-                genreFilter
-                  ? "selected"
-                  : ""
-              }
-              onClick={() =>
-                setGenreMenuOpen(
-                  (open) => !open,
-                )
-              }
-            >
-              {genreFilter
-                ? genreFilter
-                : "Genre"}
-              <span className="filter-chevron">
-                ▾
-              </span>
-            </button>
-
-            {genreMenuOpen && (
-              <div className="genre-menu">
-                <button
-                  className={
-                    genreFilter === null
-                      ? "genre-option selected"
-                      : "genre-option"
-                  }
-                  onClick={() => {
-                    setGenreFilter(null);
-                    setGenreMenuOpen(false);
-                  }}
-                >
-                  All Genres
-                </button>
-
-                {genres.map((genre) => (
-                  <button
-                    className={
-                      genreFilter === genre
-                        ? "genre-option selected"
-                        : "genre-option"
-                    }
-                    key={genre}
-                    onClick={() => {
-                      setGenreFilter(genre);
-                      setGenreMenuOpen(false);
-                    }}
-                  >
-                    {genre}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <select
+            value={genreFilter}
+            onChange={(e) =>
+              setGenreFilter(e.target.value)
+            }
+          >
+            <option>All Genres</option>
+            {genres.map((genre) => (
+              <option key={genre}>{genre}</option>
+            ))}
+          </select>
 
           <span className="toolbar-spacer" />
 
@@ -219,10 +155,8 @@ export default function MovieLogsPage({
                 ? "view-toggle selected"
                 : "view-toggle"
             }
+            onClick={() => setViewMode("grid")}
             title="Grid view"
-            onClick={() =>
-              setViewMode("grid")
-            }
           >
             ▦
           </button>
@@ -233,113 +167,100 @@ export default function MovieLogsPage({
                 ? "view-toggle selected"
                 : "view-toggle"
             }
+            onClick={() => setViewMode("list")}
             title="List view"
-            onClick={() =>
-              setViewMode("list")
-            }
           >
             ☰
           </button>
         </div>
       </div>
 
-      {filteredLogs.length === 0 ? (
-        <div className="empty-page movie-logs-empty">
+      {filtered.length === 0 ? (
+        <div className="movie-logs-empty">
+          <h2>
+            {logs.length === 0
+              ? "Nothing logged yet"
+              : "No matching titles"}
+          </h2>
+
+          <p className="muted">
+            {logs.length === 0
+              ? "Movies and TV shows you log will appear here."
+              : "Try another search or filter."}
+          </p>
+
           {logs.length === 0 ? (
-            <>
-              <h2>Nothing logged yet</h2>
-              <p className="muted">
-                Movies and TV shows you log will
-                appear here.
-              </p>
-            </>
+            <button
+              className="primary"
+              onClick={onAddTitle}
+            >
+              + Add Title
+            </button>
           ) : (
-            <>
-              <h2>No matching titles</h2>
-              <p className="muted">
-                Try another search or filter.
-              </p>
-
-              <button
-                onClick={() => {
-                  setQuery("");
-                  setTypeFilter("all");
-                  setGenreFilter(null);
-                }}
-              >
-                Clear Filters
-              </button>
-            </>
+            <button
+              onClick={() => {
+                setQuery("");
+                setTypeFilter("all");
+                setGenreFilter("All Genres");
+              }}
+            >
+              Clear Filters
+            </button>
           )}
-
-          <button
-            className="primary"
-            onClick={onAddTitle}
-          >
-            + Add Title
-          </button>
         </div>
       ) : viewMode === "grid" ? (
         <div className="movie-log-grid">
-          {filteredLogs.map((movie) => {
-            const genresForMovie =
-              getGenres(movie);
-
-            return (
-              <article
-                className="movie-log-card"
-                key={movie.id}
-              >
-                <div className="movie-log-poster">
-                  {movie.poster_path ? (
-                    <img
-                      src={movie.poster_path}
-                      alt={movie.title}
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="movie-log-poster-empty">
-                      {movie.media_type === "movie"
-                        ? "MOVIE"
-                        : "TV SHOW"}
-                    </div>
-                  )}
-
-                  <span>
+          {filtered.map((movie) => (
+            <article
+              className="movie-log-card"
+              key={movie.id}
+            >
+              <div className="movie-log-poster">
+                {movie.poster_path ? (
+                  <img
+                    src={movie.poster_path}
+                    alt={movie.title}
+                  />
+                ) : (
+                  <div className="movie-log-poster-empty">
                     {movie.media_type === "movie"
                       ? "MOVIE"
                       : "TV SHOW"}
-                  </span>
-                </div>
-
-                <div className="movie-log-info">
-                  <strong>{movie.title}</strong>
-
-                  <div className="movie-log-subline">
-                    <span>{getYear(movie)}</span>
-
-                    {movie.rating !== null && (
-                      <span className="movie-log-rating">
-                        {movie.rating} / 10
-                      </span>
-                    )}
                   </div>
+                )}
 
-                  {genresForMovie.length > 0 && (
-                    <small>
-                      {genresForMovie.join(" · ")}
-                    </small>
-                  )}
+                <span>
+                  {movie.media_type === "movie"
+                    ? "MOVIE"
+                    : "TV SHOW"}
+                </span>
+              </div>
 
-                  {movie.times_watched > 1 && (
-                    <div className="times-watched">
-                      Watched {movie.times_watched} times
-                    </div>
+              <div className="movie-log-info">
+                <strong>{movie.title}</strong>
+
+                <div className="movie-log-subline">
+                  <span>{yearOf(movie)}</span>
+
+                  {movie.rating !== null && (
+                    <span className="movie-log-rating">
+                      {movie.rating} / 10
+                    </span>
                   )}
                 </div>
-              </article>
-            );
-          })}
+
+                {movie.genres && (
+                  <small>{movie.genres}</small>
+                )}
+
+                {movie.times_watched > 1 && (
+                  <div className="times-watched">
+                    Watched {movie.times_watched} times
+                  </div>
+                )}
+              </div>
+            </article>
+          ))}
         </div>
       ) : (
         <div className="movie-log-list">
@@ -352,7 +273,7 @@ export default function MovieLogsPage({
             <span>Rating</span>
           </div>
 
-          {filteredLogs.map((movie) => (
+          {filtered.map((movie) => (
             <article
               className="movie-log-list-row"
               key={movie.id}
@@ -362,7 +283,6 @@ export default function MovieLogsPage({
                   <img
                     src={movie.poster_path}
                     alt={movie.title}
-                    loading="lazy"
                   />
                 ) : (
                   <span>
@@ -381,7 +301,7 @@ export default function MovieLogsPage({
                   : "TV Show"}
               </span>
 
-              <span>{getYear(movie)}</span>
+              <span>{yearOf(movie)}</span>
 
               <span>
                 {movie.genres || "—"}
@@ -398,10 +318,8 @@ export default function MovieLogsPage({
       )}
 
       <p className="movie-log-count">
-        {filteredLogs.length}{" "}
-        {filteredLogs.length === 1
-          ? "title"
-          : "titles"}
+        {filtered.length}{" "}
+        {filtered.length === 1 ? "title" : "titles"}
       </p>
     </section>
   );

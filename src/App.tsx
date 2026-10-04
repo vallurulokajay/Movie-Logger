@@ -13,7 +13,10 @@ import {
   type OmdbDetails,
   type OmdbSearchResult,
 } from "./lib/omdb";
-import { addOmdbTitleToMovieLogs } from "./lib/titles";
+import {
+  addOmdbTitleToMovieLogs,
+  addOmdbTitleToWatchlist,
+} from "./lib/titles";
 import {
   getOmdbApiKey,
   removeOmdbApiKey,
@@ -21,6 +24,7 @@ import {
 } from "./lib/settings";
 import TitlePreview from "./components/TitlePreview";
 import MovieLogsPage from "./components/MovieLogsPage";
+import WatchlistsPage from "./components/WatchlistsPage";
 
 type Page =
   | "Home"
@@ -54,6 +58,7 @@ function App() {
   const [loadingDetailsId, setLoadingDetailsId] =
     useState<string | null>(null);
   const [addingToLogs, setAddingToLogs] = useState(false);
+  const [watchlistBusy, setWatchlistBusy] = useState(false);
 const [actionMessage, setActionMessage] = useState("");
 
   useEffect(() => {
@@ -170,6 +175,38 @@ const [actionMessage, setActionMessage] = useState("");
       );
     } finally {
       setAddingToLogs(false);
+    }
+  }
+
+  async function handleAddToWatchlist() {
+    if (!selectedOnlineTitle) {
+      return;
+    }
+
+    setWatchlistBusy(true);
+    setActionMessage("");
+
+    try {
+      await addOmdbTitleToWatchlist(
+        selectedOnlineTitle,
+      );
+
+      const homeStats = await getHomeStats();
+      setStats(homeStats);
+
+      setActionMessage(
+        `${selectedOnlineTitle.Title} was added to your Watchlist.`,
+      );
+
+      setSelectedOnlineTitle(null);
+    } catch (error) {
+      setActionMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not add the title to Watchlist.",
+      );
+    } finally {
+      setWatchlistBusy(false);
     }
   }
 
@@ -405,10 +442,12 @@ const [actionMessage, setActionMessage] = useState("");
         )}
 
         {page === "Watchlists" && (
-          <Collection
-            title="Watchlists"
-            subtitle="YOUR QUEUE"
-            filtered={[]}
+          <WatchlistsPage
+            onAddTitle={() => setPage("Home")}
+            onChanged={async () => {
+              const homeStats = await getHomeStats();
+              setStats(homeStats);
+            }}
           />
         )}
 
@@ -495,7 +534,9 @@ const [actionMessage, setActionMessage] = useState("");
     details={selectedOnlineTitle}
     onClose={() => setSelectedOnlineTitle(null)}
     onAddToMovieLogs={() => void handleAddToMovieLogs()}
+    onAddToWatchlist={() => void handleAddToWatchlist()}
     adding={addingToLogs}
+    watchlistBusy={watchlistBusy}
   />
 )}
 {actionMessage && (
@@ -504,108 +545,6 @@ const [actionMessage, setActionMessage] = useState("");
   </div>
 )}
     </div>
-  );
-}
-
-function Collection({
-  title,
-  subtitle,
-  filtered,
-}: {
-  title: string;
-  subtitle: string;
-  filtered: LocalTitle[];
-}) {
-  return (
-    <section className="page-section">
-      <div className="page-head">
-        <div>
-          <p className="eyebrow">
-            {subtitle}
-          </p>
-
-          <h1>{title}</h1>
-        </div>
-
-        <button className="primary">
-          + Add Title
-        </button>
-      </div>
-
-      <div className="toolbar">
-        <input placeholder="Search..." />
-
-        <button className="selected">
-          All
-        </button>
-
-        <button>
-          Movies
-        </button>
-
-        <button>
-          TV Shows
-        </button>
-
-        <button>
-          Genre
-        </button>
-
-        <span className="spacer" />
-
-        <button>▦</button>
-        <button>☰</button>
-      </div>
-
-      {filtered.length === 0 ? (
-        <div className="empty-page">
-          <h2>
-            {title === "Movie Logs"
-              ? "Nothing logged yet"
-              : "Your watchlist is empty"}
-          </h2>
-
-          <p className="muted">
-            {title === "Movie Logs"
-              ? "Movies and TV shows you log will appear here."
-              : "Movies and TV shows you add to your watchlist will appear here."}
-          </p>
-
-          <button className="primary">
-            + Add Title
-          </button>
-        </div>
-      ) : (
-        <div className="grid">
-          {filtered.map((movie) => (
-            <article
-              className="movie"
-              key={movie.id}
-            >
-              <div className="poster">
-                <span>
-                  {movie.media_type === "movie"
-                    ? "MOVIE"
-                    : "TV SHOW"}
-                </span>
-              </div>
-
-              <strong>
-                {movie.title}
-              </strong>
-
-              <small>
-                {(
-                  movie.release_date ||
-                  movie.first_air_date ||
-                  "—"
-                ).slice(0, 4)}
-              </small>
-            </article>
-          ))}
-        </div>
-      )}
-    </section>
   );
 }
 

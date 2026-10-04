@@ -4,7 +4,9 @@ type Props = {
   details: OmdbDetails;
   onClose: () => void;
   onAddToMovieLogs: () => void;
+  onAddToWatchlist: () => void;
   adding: boolean;
+  watchlistBusy: boolean;
 };
 
 function clean(value: string | undefined) {
@@ -15,7 +17,9 @@ export default function TitlePreview({
   details,
   onClose,
   onAddToMovieLogs,
+  onAddToWatchlist,
   adding,
+  watchlistBusy,
 }: Props) {
   const isSeries = details.Type === "series";
 
@@ -101,8 +105,13 @@ export default function TitlePreview({
                   : "+ Add to Movie Logs"}
               </button>
 
-              <button>
-                + Add to Watchlist
+              <button
+                onClick={onAddToWatchlist}
+                disabled={adding || watchlistBusy}
+              >
+                {watchlistBusy
+                  ? "Adding..."
+                  : "+ Add to Watchlist"}
               </button>
 
               <button>
