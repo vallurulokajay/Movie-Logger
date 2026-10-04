@@ -454,3 +454,177 @@ export async function deleteList(
     [id],
   );
 }
+
+
+export type TitleDetails = {
+  id: number;
+  title: string;
+  media_type: "movie" | "tv";
+  original_title: string | null;
+  poster_path: string | null;
+  backdrop_path: string | null;
+  release_date: string | null;
+  first_air_date: string | null;
+  last_air_date: string | null;
+  runtime: number | null;
+  overview: string | null;
+  original_language: string | null;
+  director: string | null;
+  main_cast: string | null;
+  rating: number | null;
+  notes: string | null;
+  times_watched: number;
+  genres: string | null;
+  lists: string | null;
+  watchlisted: number;
+};
+
+export async function getTitleDetails(
+  titleId: number,
+): Promise<TitleDetails | null> {
+  const db = await getDatabase();
+
+  const rows = await db.select<TitleDetails[]>(
+    `SELECT
+       t.id,
+       t.title,
+       t.media_type,
+       t.original_title,
+       t.poster_path,
+       t.backdrop_path,
+       t.release_date,
+       t.first_air_date,
+       t.last_air_date,
+       t.runtime,
+       t.overview,
+       t.original_language,
+       t.director,
+       t.main_cast,
+       tl.rating,
+       tl.notes,
+       COALESCE(tl.times_watched, 0) AS times_watched,
+       (
+         SELECT GROUP_CONCAT(DISTINCT g.name)
+         FROM title_genres tg
+         JOIN genres g
+           ON g.id = tg.genre_id
+         WHERE tg.title_id = t.id
+       ) AS genres,
+       (
+         SELECT GROUP_CONCAT(DISTINCT l.name)
+         FROM list_items li
+         JOIN lists l
+           ON l.id = li.list_id
+         WHERE li.title_id = t.id
+       ) AS lists,
+       CASE
+         WHEN EXISTS (
+           SELECT 1
+           FROM watchlist_items wi
+           WHERE wi.title_id = t.id
+         )
+         THEN 1
+         ELSE 0
+       END AS watchlisted
+     FROM titles t
+     LEFT JOIN title_logs tl
+       ON tl.title_id = t.id
+     WHERE t.id = $1
+     LIMIT 1`,
+    [titleId],
+  );
+
+  return rows[0] ?? null;
+}
+
+export async function addTitleToMovieLogs(
+  titleId: number,
+): Promise<void> {
+  const db = await getDatabase();
+
+  const existing = await db.select<{ id: number }[]>(
+    `SELECT id
+     FROM title_logs
+     WHERE title_id = $1
+     LIMIT 1`,
+    [titleId],
+  );
+
+  if (existing.length === 0) {
+    await db.execute(
+      `INSERT INTO title_logs (
+        title_id,
+        rating,
+        notes,
+        times_watched
+      )
+      VALUES ($1, NULL, NULL, 1)`,
+      [titleId],
+    );
+  }
+}
+
+export async function updateTitleLog(
+  titleId: number,
+  rating: number | null,
+  notes: string | null,
+): Promise<void> {
+  const db = await getDatabase();
+
+  const existing = await db.select<{ id: number }[]>(
+    `SELECT id
+     FROM title_logs
+     WHERE title_id = $1
+     LIMIT 1`,
+    [titleId],
+  );
+
+  if (existing.length === 0) {
+    await db.execute(
+      `INSERT INTO title_logs (
+        title_id,
+        rating,
+        notes,
+        times_watched
+      )
+      VALUES ($1, $2, $3, 1)`,
+      [titleId, rating, notes?.trim() || null],
+    );
+  } else {
+    await db.execute(
+      `UPDATE title_logs
+       SET rating = $1,
+           notes = $2,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE title_id = $3`,
+      [rating, notes?.trim() || null, titleId],
+    );
+  }
+}
+
+export async function incrementTitleWatched(
+  titleId: number,
+): Promise<void> {
+  const db = await getDatabase();
+
+  const existing = await db.select<{ id: number }[]>(
+    `SELECT id
+     FROM title_logs
+     WHERE title_id = $1
+     LIMIT 1`,
+    [titleId],
+  );
+
+  if (existing.length === 0) {
+    await addTitleToMovieLogs(titleId);
+    return;
+  }
+
+  await db.execute(
+    `UPDATE title_logs
+     SET times_watched = times_watched + 1,
+         updated_at = CURRENT_TIMESTAMP
+     WHERE title_id = $1`,
+    [titleId],
+  );
+}

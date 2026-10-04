@@ -28,12 +28,14 @@ import TitlePreview from "./components/TitlePreview";
 import MovieLogsPage from "./components/MovieLogsPage";
 import WatchlistsPage from "./components/WatchlistsPage";
 import ListsPage from "./components/ListsPage";
+import TitleDetailsPage from "./components/TitleDetailsPage";
 
 type Page =
   | "Home"
   | "Movie Logs"
   | "Watchlists"
   | "Lists"
+  | "Title Details"
   | "Profile"
   | "Settings";
 
@@ -41,6 +43,8 @@ function App() {
   const [page, setPage] = useState<Page>("Home");
   const [dbStatus, setDbStatus] = useState("Starting local database...");
   const [search, setSearch] = useState("");
+  const [selectedTitleId, setSelectedTitleId] =
+    useState<number | null>(null);
 
   const [movieLogs, setMovieLogs] = useState<MovieLog[]>([]);
 
@@ -159,7 +163,10 @@ const [actionMessage, setActionMessage] = useState("");
     setActionMessage("");
 
     try {
-      await addOmdbTitleToMovieLogs(selectedOnlineTitle);
+      const titleId =
+        await addOmdbTitleToMovieLogs(
+          selectedOnlineTitle,
+        );
 
       const homeStats = await getHomeStats();
       setStats(homeStats);
@@ -172,6 +179,8 @@ const [actionMessage, setActionMessage] = useState("");
       );
 
       setSelectedOnlineTitle(null);
+      setSelectedTitleId(titleId);
+      setPage("Title Details");
     } catch (error) {
       setActionMessage(
         error instanceof Error
@@ -349,6 +358,10 @@ const [actionMessage, setActionMessage] = useState("");
                     <button
                       className="result"
                       key={movie.id}
+                      onClick={() => {
+                        setSelectedTitleId(movie.id);
+                        setPage("Title Details");
+                      }}
                     >
                       <span>{movie.title}</span>
 
@@ -502,7 +515,26 @@ const [actionMessage, setActionMessage] = useState("");
           />
         )}
 
-              {page === "Profile" && (
+              {page === "Title Details" &&
+          selectedTitleId !== null && (
+          <TitleDetailsPage
+            titleId={selectedTitleId}
+            onBack={() => setPage("Home")}
+            onChanged={async () => {
+              const homeStats =
+                await getHomeStats();
+
+              setStats(homeStats);
+
+              const logs =
+                await getMovieLogs();
+
+              setMovieLogs(logs);
+            }}
+          />
+        )}
+
+        {page === "Profile" && (
           <section className="page-section">
             <div className="page-head">
               <div>
