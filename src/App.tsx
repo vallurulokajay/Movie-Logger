@@ -29,6 +29,9 @@ import MovieLogsPage from "./components/MovieLogsPage";
 import WatchlistsPage from "./components/WatchlistsPage";
 import ListsPage from "./components/ListsPage";
 import TitleDetailsPage from "./components/TitleDetailsPage";
+import ProfilePage from "./components/ProfilePage";
+import TagsManager from "./components/TagsManager";
+import AnalyticsPanel from "./components/AnalyticsPanel";
 
 type Page =
   | "Home"
@@ -41,7 +44,6 @@ type Page =
 
 function App() {
   const [page, setPage] = useState<Page>("Home");
-  const [dbStatus, setDbStatus] = useState("Starting local database...");
   const [search, setSearch] = useState("");
   const [selectedTitleId, setSelectedTitleId] =
     useState<number | null>(null);
@@ -74,7 +76,6 @@ const [actionMessage, setActionMessage] = useState("");
     Database.load("sqlite:movie_logger.db")
       .then(async (db) => {
         await db.execute("PRAGMA foreign_keys = ON");
-        setDbStatus("Local database ready");
 
         const homeStats = await getHomeStats();
         setStats(homeStats);
@@ -82,11 +83,7 @@ const [actionMessage, setActionMessage] = useState("");
         const logs = await getMovieLogs();
         setMovieLogs(logs);
       })
-      .catch(() => {
-        setDbStatus(
-          "Database will initialize when the Tauri shell runs",
-        );
-      });
+      .catch(() => {});
   }, []);
 
   async function handleSearch() {
@@ -457,6 +454,8 @@ const [actionMessage, setActionMessage] = useState("");
               </div>
             </section>
 
+            <AnalyticsPanel />
+
             <section className="section">
               <div className="section-head">
                 <div>
@@ -535,43 +534,9 @@ const [actionMessage, setActionMessage] = useState("");
         )}
 
         {page === "Profile" && (
-          <section className="page-section">
-            <div className="page-head">
-              <div>
-                <p className="eyebrow">
-                  PERSONAL PROFILE
-                </p>
-
-                <h1>Profile</h1>
-              </div>
-
-              <button
-                onClick={() => setPage("Settings")}
-              >
-                Settings
-              </button>
-            </div>
-
-            <div className="profile-card">
-              <div className="avatar">L</div>
-
-              <div>
-                <h2>Lokajay</h2>
-
-                <p className="muted">
-                  Your private Movie Logger profile.
-                </p>
-
-                <button>
-                  Edit Profile
-                </button>
-              </div>
-            </div>
-
-            <p className="db-status">
-              {dbStatus}
-            </p>
-          </section>
+          <ProfilePage
+            onSettings={() => setPage("Settings")}
+          />
         )}
 
         {page === "Settings" && (
@@ -728,6 +693,10 @@ function SettingsPage({
             {status}
           </p>
         )}
+      </div>
+
+      <div className="settings-card settings-tags-card">
+        <TagsManager />
       </div>
     </section>
   );

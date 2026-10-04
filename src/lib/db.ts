@@ -628,3 +628,330 @@ export async function incrementTitleWatched(
     [titleId],
   );
 }
+
+
+export type Tag = {
+  id: number;
+  name: string;
+};
+
+export async function getTags(): Promise<Tag[]> {
+  const db = await getDatabase();
+
+  return db.select<Tag[]>(
+    `SELECT id, name
+     FROM tags
+     ORDER BY name COLLATE NOCASE`,
+  );
+}
+
+export async function createTag(
+  name: string,
+): Promise<number> {
+  const db = await getDatabase();
+  const cleaned = name.trim();
+
+  if (!cleaned) {
+    throw new Error("Tag name is required.");
+  }
+
+  await db.execute(
+    `INSERT INTO tags (name)
+     VALUES ($1)`,
+    [cleaned],
+  );
+
+  const rows = await db.select<{ id: number }[]>(
+    `SELECT id
+     FROM tags
+     WHERE name = $1
+     LIMIT 1`,
+    [cleaned],
+  );
+
+  if (!rows.length) {
+    throw new Error("Could not create tag.");
+  }
+
+  return rows[0].id;
+}
+
+export async function renameTag(
+  id: number,
+  name: string,
+): Promise<void> {
+  const db = await getDatabase();
+  const cleaned = name.trim();
+
+  if (!cleaned) {
+    throw new Error("Tag name is required.");
+  }
+
+  await db.execute(
+    `UPDATE tags
+     SET name = $1
+     WHERE id = $2`,
+    [cleaned, id],
+  );
+}
+
+export async function deleteTag(
+  id: number,
+): Promise<void> {
+  const db = await getDatabase();
+
+  await db.execute(
+    `DELETE FROM tags
+     WHERE id = $1`,
+    [id],
+  );
+}
+
+export async function getTitleTags(
+  titleId: number,
+): Promise<Tag[]> {
+  const db = await getDatabase();
+
+  return db.select<Tag[]>(
+    `SELECT
+       tg.id,
+       tg.name
+     FROM tags tg
+     JOIN title_tags tt
+       ON tt.tag_id = tg.id
+     WHERE tt.title_id = $1
+     ORDER BY tg.name COLLATE NOCASE`,
+    [titleId],
+  );
+}
+
+export async function addTagToTitle(
+  titleId: number,
+  tagId: number,
+): Promise<void> {
+  const db = await getDatabase();
+
+  await db.execute(
+    `INSERT OR IGNORE INTO title_tags (
+      title_id,
+      tag_id
+    )
+    VALUES ($1, $2)`,
+    [titleId, tagId],
+  );
+}
+
+export async function removeTagFromTitle(
+  titleId: number,
+  tagId: number,
+): Promise<void> {
+  const db = await getDatabase();
+
+  await db.execute(
+    `DELETE FROM title_tags
+     WHERE title_id = $1
+       AND tag_id = $2`,
+    [titleId, tagId],
+  );
+}
+
+export type Profile = {
+  name: string;
+  bio: string | null;
+  profile_picture_path: string | null;
+};
+
+export async function getProfile(): Promise<Profile> {
+  const db = await getDatabase();
+
+  const rows = await db.select<Profile[]>(
+    `SELECT
+       name,
+       bio,
+       profile_picture_path
+     FROM profile
+     WHERE id = 1
+     LIMIT 1`,
+  );
+
+  return rows[0] ?? {
+    name: "Lokajay",
+    bio: null,
+    profile_picture_path: null,
+  };
+}
+
+export async function updateProfile(
+  name: string,
+  bio: string,
+  profilePicturePath: string | null,
+): Promise<void> {
+  const db = await getDatabase();
+
+  const cleanedName = name.trim();
+
+  if (!cleanedName) {
+    throw new Error("Name is required.");
+  }
+
+  await db.execute(
+    `UPDATE profile
+     SET name = $1,
+         bio = $2,
+         profile_picture_path = $3,
+         updated_at = CURRENT_TIMESTAMP
+     WHERE id = 1`,
+    [
+      cleanedName,
+      bio.trim() || null,
+      profilePicturePath,
+    ],
+  );
+}
+
+export type HomeAnalytics = {
+  totalTimesWatched: number;
+  repeatedTitles: number;
+  movies: number;
+  tvShows: number;
+  highestRated: {
+    title: string;
+    rating: number;
+  } | null;
+  lowestRated: {
+    title: string;
+    rating: number;
+  } | null;
+  ratingDistribution: Array<{
+    rating: number;
+    count: number;
+  }>;
+  genres: Array<{
+    genre: string;
+    titles: number;
+    averageRating: number | null;
+  }>;
+};
+
+export async function getHomeAnalytics(): Promise<HomeAnalytics> {
+  const db = await getDatabase();
+
+  const totals = await db.select<{
+    totalTimesWatched: number | null;
+    repeatedTitles: number;
+  }[]>(
+    `SELECT
+       COALESCE(SUM(times_watched), 0) AS totalTimesWatched,
+       COUNT(
+         CASE
+           WHEN times_watched > 1 THEN 1
+         END
+       ) AS repeatedTitles
+     FROM title_logs`,
+  );
+
+  const media = await db.select<{
+    movies: number;
+    tvShows: number;
+  }[]>(
+    `SELECT
+       COUNT(
+         CASE
+           WHEN t.media_type = 'movie' THEN 1
+         END
+       ) AS movies,
+       COUNT(
+         CASE
+           WHEN t.media_type = 'tv' THEN 1
+         END
+       ) AS tvShows
+     FROM title_logs tl
+     JOIN titles t
+       ON t.id = tl.title_id`,
+  );
+
+  const highest = await db.select<{
+    title: string;
+    rating: number;
+  }[]>(
+    `SELECT
+       t.title,
+       tl.rating
+     FROM title_logs tl
+     JOIN titles t
+       ON t.id = tl.title_id
+     WHERE tl.rating IS NOT NULL
+     ORDER BY tl.rating DESC, t.title COLLATE NOCASE
+     LIMIT 1`,
+  );
+
+  const lowest = await db.select<{
+    title: string;
+    rating: number;
+  }[]>(
+    `SELECT
+       t.title,
+       tl.rating
+     FROM title_logs tl
+     JOIN titles t
+       ON t.id = tl.title_id
+     WHERE tl.rating IS NOT NULL
+     ORDER BY tl.rating ASC, t.title COLLATE NOCASE
+     LIMIT 1`,
+  );
+
+  const ratingDistribution =
+    await db.select<
+      { rating: number; count: number }[]
+    >(
+      `SELECT
+         rating,
+         COUNT(*) AS count
+       FROM title_logs
+       WHERE rating IS NOT NULL
+       GROUP BY rating
+       ORDER BY rating DESC`,
+    );
+
+  const genres = await db.select<
+    {
+      genre: string;
+      titles: number;
+      averageRating: number | null;
+    }[]
+  >(
+    `SELECT
+       g.name AS genre,
+       COUNT(DISTINCT t.id) AS titles,
+       AVG(tl.rating) AS averageRating
+     FROM genres g
+     JOIN title_genres tg
+       ON tg.genre_id = g.id
+     JOIN titles t
+       ON t.id = tg.title_id
+     LEFT JOIN title_logs tl
+       ON tl.title_id = t.id
+     GROUP BY g.id
+     ORDER BY titles DESC, g.name COLLATE NOCASE
+     LIMIT 10`,
+  );
+
+  return {
+    totalTimesWatched:
+      totals[0]?.totalTimesWatched ?? 0,
+    repeatedTitles:
+      totals[0]?.repeatedTitles ?? 0,
+    movies: media[0]?.movies ?? 0,
+    tvShows: media[0]?.tvShows ?? 0,
+    highestRated: highest[0] ?? null,
+    lowestRated: lowest[0] ?? null,
+    ratingDistribution,
+    genres: genres.map((item) => ({
+      ...item,
+      averageRating:
+        item.averageRating !== null
+          ? Number(item.averageRating.toFixed(1))
+          : null,
+    })),
+  };
+}

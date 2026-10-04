@@ -5,6 +5,11 @@ import {
   getTitleDetails,
   incrementTitleWatched,
   updateTitleLog,
+  getTags,
+  getTitleTags,
+  addTagToTitle,
+  removeTagFromTitle,
+  type Tag,
   type TitleDetails,
 } from "../lib/db";
 
@@ -76,6 +81,15 @@ export default function TitleDetailsPage({
   const [message, setMessage] =
     useState("");
 
+  const [titleTags, setTitleTags] =
+    useState<Tag[]>([]);
+
+  const [availableTags, setAvailableTags] =
+    useState<Tag[]>([]);
+
+  const [selectedTagId, setSelectedTagId] =
+    useState("");
+
   async function load() {
     setLoading(true);
     setError("");
@@ -93,6 +107,17 @@ export default function TitleDetailsPage({
       setTitle(details);
       setRating(details.rating);
       setNotes(details.notes ?? "");
+
+      const [
+        nextTitleTags,
+        nextAvailableTags,
+      ] = await Promise.all([
+        getTitleTags(titleId),
+        getTags(),
+      ]);
+
+      setTitleTags(nextTitleTags);
+      setAvailableTags(nextAvailableTags);
     } catch (err) {
       setError(
         err instanceof Error
@@ -176,6 +201,55 @@ export default function TitleDetailsPage({
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function addTag() {
+    if (!selectedTagId) {
+      return;
+    }
+
+    try {
+      await addTagToTitle(
+        titleId,
+        Number(selectedTagId),
+      );
+
+      const tags =
+        await getTitleTags(titleId);
+
+      setTitleTags(tags);
+      setSelectedTagId("");
+      setMessage("Tag added.");
+    } catch (err) {
+      setMessage(
+        err instanceof Error
+          ? err.message
+          : "Could not add tag.",
+      );
+    }
+  }
+
+  async function removeTag(
+    tagId: number,
+  ) {
+    try {
+      await removeTagFromTitle(
+        titleId,
+        tagId,
+      );
+
+      setTitleTags(
+        await getTitleTags(titleId),
+      );
+
+      setMessage("Tag removed.");
+    } catch (err) {
+      setMessage(
+        err instanceof Error
+          ? err.message
+          : "Could not remove tag.",
+      );
     }
   }
 
@@ -557,6 +631,93 @@ export default function TitleDetailsPage({
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="personal-panel">
+            <div className="personal-panel-head">
+              <div>
+                <p className="eyebrow">
+                  TAGS
+                </p>
+
+                <h2>
+                  {titleTags.length
+                    ? `${titleTags.length} ${
+                        titleTags.length === 1
+                          ? "tag"
+                          : "tags"
+                      }`
+                    : "No tags"}
+                </h2>
+              </div>
+            </div>
+
+            {titleTags.length > 0 && (
+              <div className="title-tag-list">
+                {titleTags.map((tag) => (
+                  <span key={tag.id}>
+                    {tag.name}
+
+                    <button
+                      title={`Remove ${tag.name}`}
+                      onClick={() =>
+                        void removeTag(
+                          tag.id,
+                        )
+                      }
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="title-tag-add">
+              <select
+                value={selectedTagId}
+                onChange={(e) =>
+                  setSelectedTagId(
+                    e.target.value,
+                  )
+                }
+              >
+                <option value="">
+                  Select a tag...
+                </option>
+
+                {availableTags
+                  .filter(
+                    (tag) =>
+                      !titleTags.some(
+                        (current) =>
+                          current.id ===
+                          tag.id,
+                      ),
+                  )
+                  .map((tag) => (
+                    <option
+                      value={tag.id}
+                      key={tag.id}
+                    >
+                      {tag.name}
+                    </option>
+                  ))}
+              </select>
+
+              <button
+                disabled={!selectedTagId}
+                onClick={() =>
+                  void addTag()
+                }
+              >
+                + Add
+              </button>
+            </div>
+
+            <p className="muted">
+              Create and manage tags in Settings.
+            </p>
           </div>
 
           <div className="personal-panel">
