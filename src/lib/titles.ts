@@ -90,7 +90,6 @@ export async function addOmdbTitleToMovieLogs(
       `INSERT INTO titles (
         external_id,
         external_source,
-        tmdb_id,
         media_type,
         title,
         original_title,
@@ -107,12 +106,11 @@ export async function addOmdbTitleToMovieLogs(
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-        $11, $12, $13, $14, $15, $16
+        $11, $12, $13, $14, $15
       )`,
       [
         externalId,
         "omdb",
-        0,
         mediaType,
         details.Title,
         null,

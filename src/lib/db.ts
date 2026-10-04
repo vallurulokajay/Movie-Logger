@@ -53,6 +53,13 @@ export type LocalTitle = {
   poster_path: string | null;
 };
 
+export type MovieLog = LocalTitle & {
+  rating: number | null;
+  notes: string | null;
+  times_watched: number;
+  genres: string | null;
+};
+
 export async function searchLocalTitles(query: string): Promise<LocalTitle[]> {
   const db = await getDatabase();
 
@@ -69,5 +76,30 @@ export async function searchLocalTitles(query: string): Promise<LocalTitle[]> {
      ORDER BY title COLLATE NOCASE
      LIMIT 20`,
     [`%${query}%`],
+  );
+}
+
+
+export async function getMovieLogs(): Promise<MovieLog[]> {
+  const db = await getDatabase();
+
+  return db.select<MovieLog[]>(
+    `SELECT
+       t.id,
+       t.title,
+       t.media_type,
+       t.release_date,
+       t.first_air_date,
+       t.poster_path,
+       l.rating,
+       l.notes,
+       l.times_watched,
+       GROUP_CONCAT(DISTINCT g.name) AS genres
+     FROM titles t
+     JOIN title_logs l ON l.title_id = t.id
+     LEFT JOIN title_genres tg ON tg.title_id = t.id
+     LEFT JOIN genres g ON g.id = tg.genre_id
+     GROUP BY t.id, l.id
+     ORDER BY l.updated_at DESC, t.title COLLATE NOCASE`,
   );
 }
