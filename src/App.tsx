@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import Database from "@tauri-apps/plugin-sql";
 import {
   getHomeStats,
+  getMovieLogs,
   searchLocalTitles,
   type LocalTitle,
+  type MovieLog,
 } from "./lib/db";
 import {
   getOmdbDetails,
@@ -32,6 +34,8 @@ function App() {
   const [dbStatus, setDbStatus] = useState("Starting local database...");
   const [search, setSearch] = useState("");
 
+  const [movieLogs, setMovieLogs] = useState<MovieLog[]>([]);
+
   const [stats, setStats] = useState({
     logged: 0,
     watchlist: 0,
@@ -59,6 +63,9 @@ const [actionMessage, setActionMessage] = useState("");
 
         const homeStats = await getHomeStats();
         setStats(homeStats);
+
+        const logs = await getMovieLogs();
+        setMovieLogs(logs);
       })
       .catch(() => {
         setDbStatus(
@@ -145,6 +152,9 @@ const [actionMessage, setActionMessage] = useState("");
 
       const homeStats = await getHomeStats();
       setStats(homeStats);
+
+      const logs = await getMovieLogs();
+      setMovieLogs(logs);
 
       setActionMessage(
         `${selectedOnlineTitle.Title} was added to Movie Logs.`,
@@ -390,7 +400,7 @@ const [actionMessage, setActionMessage] = useState("");
           <Collection
             title="Movie Logs"
             subtitle="YOUR HISTORY"
-            filtered={[]}
+            filtered={movieLogs}
           />
         )}
 
